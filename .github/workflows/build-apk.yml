@@ -1,4 +1,4 @@
-name: Build VanTaxi Passenger and Driver APKs
+name: Build VanTaxi Passenger and Driver Release APKs
 on:
   workflow_dispatch:
   push:
@@ -20,17 +20,45 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build passenger and driver APKs
-        run: gradle assemblePassengerDebug assembleDriverDebug
-      - name: Upload passenger APK
+      - name: Check release signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || (echo "Missing ANDROID_KEYSTORE_BASE64 repository secret" && exit 1)
+          test -n "$KEYSTORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD repository secret" && exit 1)
+          test -n "$KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS repository secret" && exit 1)
+          test -n "$KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD repository secret" && exit 1)
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vantaxi-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vantaxi-release.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build signed release APKs
+        run: gradle assemblePassengerRelease assembleDriverRelease
+      - name: Verify APK signatures
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose app/build/outputs/apk/passenger/release/app-passenger-release.apk
+          "$BUILD_TOOLS/apksigner" verify --verbose app/build/outputs/apk/driver/release/app-driver-release.apk
+      - name: Upload passenger release APK
         uses: actions/upload-artifact@v4
         with:
-          name: vantaxi-passenger-apk
-          path: app/build/outputs/apk/passenger/debug/app-passenger-debug.apk
+          name: vantaxi-passenger-release-apk
+          path: app/build/outputs/apk/passenger/release/app-passenger-release.apk
           if-no-files-found: error
-      - name: Upload driver APK
+      - name: Upload driver release APK
         uses: actions/upload-artifact@v4
         with:
-          name: vantaxi-driver-apk
-          path: app/build/outputs/apk/driver/debug/app-driver-debug.apk
+          name: vantaxi-driver-release-apk
+          path: app/build/outputs/apk/driver/release/app-driver-release.apk
           if-no-files-found: error
