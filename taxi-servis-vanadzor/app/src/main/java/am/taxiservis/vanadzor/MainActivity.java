@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
             email=field("Վարորդի էլ․ փոստ"); password=field("Գաղտնաբառ");
             btn("Մուտք գործել", () -> login());
             btn("Թարմացնել պատվերները", () -> rides());
+            btn("Ուղարկել իմ GPS տեղադրությունը", () -> sendLocation());
             msg("Մուտքը հասանելի է միայն դիսպետչերի կողմից ստեղծված վարորդի հաշվով։");
         }
     }
