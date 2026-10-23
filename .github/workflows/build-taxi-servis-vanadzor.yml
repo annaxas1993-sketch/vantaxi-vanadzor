@@ -9,9 +9,13 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: taxi-servis-vanadzor-build
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: taxi-servis-vanadzor
