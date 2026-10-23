@@ -16,7 +16,6 @@ import android.graphics.Color;
 
 public class MainActivity extends Activity {
     private WebView webView;
-    private static final String SITE_URL = "https://jocular-dasik-f651c6.netlify.app/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +35,7 @@ public class MainActivity extends Activity {
                 String scheme = uri.getScheme();
                 if ("tel".equalsIgnoreCase(scheme)) {
                     try {
-                        Intent intent = new Intent(Intent.ACTION_DIAL, uri);
-                        startActivity(intent);
+                        startActivity(new Intent(Intent.ACTION_DIAL, uri));
                     } catch (ActivityNotFoundException e) {
                         Toast.makeText(MainActivity.this, "Հեռախոսազանգի ծրագիր չի գտնվել", Toast.LENGTH_LONG).show();
                     }
@@ -51,9 +49,7 @@ public class MainActivity extends Activity {
                     }
                     return true;
                 }
-                if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
-                    return false;
-                }
+                if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) return false;
                 return true;
             }
 
@@ -63,7 +59,7 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebChromeClient(new WebChromeClient());
-        webView.loadUrl(SITE_URL);
+        webView.loadUrl(BuildConfig.SITE_URL);
         root.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
     }
