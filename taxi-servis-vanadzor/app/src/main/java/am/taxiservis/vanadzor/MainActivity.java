@@ -149,8 +149,9 @@ public class MainActivity extends Activity {
         try{
             askLocation();
             if(latest==null){msg("GPS տեղադրությունը դեռ հասանելի չէ։ Միացրեք GPS-ը և փորձեք կրկին։");return;}
-            JSONObject b=new JSONObject(); b.put("last_latitude",latest.getLatitude()); b.put("last_longitude",latest.getLongitude()); b.put("last_location_at",java.time.Instant.now().toString());
-            call("/rest/v1/profiles?id=eq."+URLEncoder.encode(userId,"UTF-8"),"PATCH",b,true);
+            JSONObject b=new JSONObject(); b.put("p_latitude",latest.getLatitude()); b.put("p_longitude",latest.getLongitude());
+            JSONObject result=call("/rest/v1/rpc/update_vantaxi_driver_location","POST",b,true);
+            if(!result.optBoolean("value",false)) throw new Exception("Տեղադրությունը չի պահպանվել");
             msg("GPS տեղադրությունն ուղարկվեց։");
         }catch(Exception e){msg("GPS-ը չուղարկվեց։ Ստուգեք կապը և թույլտվությունը։");}
     }
