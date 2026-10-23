@@ -2,6 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
+def releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+
 android {
     namespace 'com.vantaxi.vanadzor'
     compileSdk 35
@@ -12,6 +17,26 @@ android {
         targetSdk 35
         versionCode 2
         versionName '1.1.0'
+    }
+
+    signingConfigs {
+        release {
+            if (releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+        }
     }
 
     flavorDimensions += 'audience'
