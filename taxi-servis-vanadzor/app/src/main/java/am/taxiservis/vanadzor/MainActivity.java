@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
         root = new LinearLayout(this); root.setOrientation(1); root.setPadding(22,24,22,24); root.setBackgroundColor(Color.rgb(246,249,250));
         ScrollView s = new ScrollView(this); s.addView(root); setContentView(s);
         TextView brand = new TextView(this); brand.setText("🚕 TAXI SERVIS VANADZOR"); brand.setTextSize(23); brand.setTextColor(Color.rgb(0,119,128)); brand.setGravity(Gravity.CENTER); brand.setPadding(0,12,0,24); brand.setTypeface(null,1); root.addView(brand);
-        TextView title = new TextView(this); title.setText(BuildConfig.APP_ROLE.equals("passenger") ? "Տաքսի պատվիրել" : "Վարորդի մուտք"); title.setTextSize(21); title.setTextColor(Color.DKGRAY); root.addView(title);
+        TextView title = new TextView(this); title.setText(BuildConfig.APP_ROLE.equals("passenger") ? "Տաքսի պատվիրել" : (BuildConfig.APP_ROLE.equals("dispatcher") ? "Դիսպետչերական վահանակ" : "Վարորդի մուտք")); title.setTextSize(21); title.setTextColor(Color.DKGRAY); root.addView(title);
         status = new TextView(this); status.setTextColor(Color.rgb(160,55,40)); status.setPadding(0,16,0,8); root.addView(status);
         if(BuildConfig.APP_ROLE.equals("passenger")) {
             name=field("Ուղևորի անուն"); phone=field("Հեռախոսահամար"); pickup=field("Վերցնելու հասցե"); destination=field("Նպատակակետի հասցե");
@@ -47,11 +47,11 @@ public class MainActivity extends Activity {
             btn("Պատվիրել տաքսի", () -> order());
             msg("Վանաձոր · Առցանց պատվեր");
         } else {
-            email=field("Վարորդի էլ․ փոստ"); password=field("Գաղտնաբառ");
+            email=field(BuildConfig.APP_ROLE.equals("dispatcher") ? "Դիսպետչերի էլ․ փոստ" : "Վարորդի էլ․ փոստ"); password=field("Գաղտնաբառ");
             btn("Մուտք գործել", () -> login());
             btn("Թարմացնել պատվերները", () -> rides());
-            btn("Ուղարկել իմ GPS տեղադրությունը", () -> sendLocation());
-            msg("Մուտքը հասանելի է միայն դիսպետչերի կողմից ստեղծված վարորդի հաշվով։");
+            if(BuildConfig.APP_ROLE.equals("driver")) btn("Ուղարկել իմ GPS տեղադրությունը", () -> sendLocation());
+            msg(BuildConfig.APP_ROLE.equals("dispatcher") ? "Մուտքը հասանելի է միայն հաստատված դիսպետչերի հաշվով։" : "Մուտքը հասանելի է միայն դիսպետչերի կողմից ստեղծված վարորդի հաշվով։");
         }
     }
     EditText field(String h){ EditText e=new EditText(this); e.setSingleLine(true); e.setHint(h); root.addView(e,new LinearLayout.LayoutParams(-1,-2)); return e; }
@@ -85,22 +85,26 @@ public class MainActivity extends Activity {
             JSONObject r=call("/auth/v1/token?grant_type=password","POST",b,false);token=r.optString("access_token");userId=r.optJSONObject("user")==null?"":r.optJSONObject("user").optString("id");
             if(token.isEmpty())throw new Exception("Մուտքը չհաջողվեց");
             JSONObject p=call("/rest/v1/profiles?id=eq."+URLEncoder.encode(userId,"UTF-8")+"&select=role,active","GET",null,true);JSONArray a=p.optJSONArray("data");
-            if(a==null||a.length()==0||!a.getJSONObject(0).optString("role").equals("driver")||!a.getJSONObject(0).optBoolean("active"))throw new Exception("Այս հաշիվը հաստատված վարորդ չէ։");
+            String requiredRole=BuildConfig.APP_ROLE.equals("dispatcher") ? "dispatcher" : "driver";
+            if(a==null||a.length()==0||!(a.getJSONObject(0).optString("role").equals(requiredRole) || (BuildConfig.APP_ROLE.equals("dispatcher") && a.getJSONObject(0).optString("role").equals("admin")))||!a.getJSONObject(0).optBoolean("active"))throw new Exception(BuildConfig.APP_ROLE.equals("dispatcher") ? "Այս հաշիվը հաստատված դիսպետչեր չէ։" : "Այս հաշիվը հաստատված վարորդ չէ։");
             msg("Մուտքը հաջողվեց։");rides();
         }catch(Exception e){token="";msg("Մուտքը չհաջողվեց. "+e.getMessage());}
     }
     void rides(){
         if(token.isEmpty()){msg("Նախ մուտք գործեք։");return;}
         try{
-            JSONObject r=call("/rest/v1/rides?select=id,pickup_address,destination_address,status,assigned_driver,created_at&status=in.(new,assigned,accepted,approaching,with_passenger)&order=created_at.desc","GET",null,true);
+            String rideQuery="/rest/v1/rides?select=id,pickup_address,destination_address,status,assigned_driver,created_at&status=in.(new,assigned,accepted,approaching,with_passenger)&order=created_at.desc";
+            JSONObject r=call(rideQuery,"GET",null,true);
             JSONArray a=r.optJSONArray("data");
             if(rideList!=null) root.removeView(rideList);
             LinearLayout list=new LinearLayout(this); list.setOrientation(1); rideList=list;
-            TextView title=new TextView(this); title.setText("Պատվերներ՝ "+(a==null?0:a.length())); title.setTextSize(18); list.addView(title);
+            TextView title=new TextView(this); title.setText((BuildConfig.APP_ROLE.equals("dispatcher") ? "Դիսպետչերական պատվերներ՝ " : "Պատվերներ՝ ")+(a==null?0:a.length())); title.setTextSize(18); list.addView(title);
             if(a!=null) for(int i=0;i<a.length();i++){
                 JSONObject x=a.getJSONObject(i); String id=x.optString("id"); String st=x.optString("status");
                 TextView details=new TextView(this); details.setText("\n"+x.optString("pickup_address")+" → "+x.optString("destination_address")+"\nԿարգավիճակ՝ "+st); details.setTextSize(16); details.setPadding(8,12,8,4); list.addView(details);
-                if(st.equals("new")){
+                if(BuildConfig.APP_ROLE.equals("dispatcher")) {
+                    TextView meta=new TextView(this); meta.setText("Պատվերի ID՝ "+id+"\nՎարորդի ID՝ "+(x.isNull("assigned_driver") ? "Չի նշանակվել" : x.optString("assigned_driver"))+"\nՍտեղծվել է՝ "+x.optString("created_at")); meta.setTextSize(13); meta.setPadding(8,0,8,12); list.addView(meta);
+                } else if(st.equals("new")){
                     Button take=new Button(this); take.setText("Ընդունել ազատ պատվերը"); list.addView(take);
                     take.setOnClickListener(v -> claimRide(id,take));
                 } else if(st.equals("assigned") && x.optString("assigned_driver").equals(userId)){
