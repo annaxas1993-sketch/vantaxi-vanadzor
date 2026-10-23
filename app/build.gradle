@@ -5,11 +5,34 @@ plugins {
 android {
     namespace 'com.vantaxi.vanadzor'
     compileSdk 35
+
     defaultConfig {
         applicationId 'com.vantaxi.vanadzor'
         minSdk 23
         targetSdk 35
-        versionCode 1
-        versionName '1.0.0'
+        versionCode 2
+        versionName '1.1.0'
+    }
+
+    flavorDimensions += 'audience'
+    productFlavors {
+        passenger {
+            dimension 'audience'
+            applicationIdSuffix '.passenger'
+            versionNameSuffix '-passenger'
+            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/?mode=passenger"'
+            resValue 'string', 'app_name', 'VanTaxi Ուղևոր'
+        }
+        driver {
+            dimension 'audience'
+            applicationIdSuffix '.driver'
+            versionNameSuffix '-driver'
+            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/?mode=driver"'
+            resValue 'string', 'app_name', 'VanTaxi Վարորդ'
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 }
