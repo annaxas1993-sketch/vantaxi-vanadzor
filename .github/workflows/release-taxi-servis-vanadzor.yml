@@ -45,7 +45,7 @@ jobs:
           echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
       - name: Build signed release APKs and Play bundles
         working-directory: taxi-servis-vanadzor
-        run: gradle --no-daemon assemblePassengerRelease assembleDriverRelease bundlePassengerRelease bundleDriverRelease
+        run: gradle --no-daemon assemblePassengerRelease assembleDriverRelease assembleDispatcherRelease bundlePassengerRelease bundleDriverRelease bundleDispatcherRelease
       - name: Upload signed releases
         uses: actions/upload-artifact@v4
         with:
@@ -53,7 +53,9 @@ jobs:
           path: |
             taxi-servis-vanadzor/app/build/outputs/apk/passenger/release/*.apk
             taxi-servis-vanadzor/app/build/outputs/apk/driver/release/*.apk
+            taxi-servis-vanadzor/app/build/outputs/apk/dispatcher/release/*.apk
             taxi-servis-vanadzor/app/build/outputs/bundle/passengerRelease/*.aab
             taxi-servis-vanadzor/app/build/outputs/bundle/driverRelease/*.aab
+            taxi-servis-vanadzor/app/build/outputs/bundle/dispatcherRelease/*.aab
           if-no-files-found: error
           retention-days: 30
