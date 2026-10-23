@@ -1,0 +1,43 @@
+name: Build Taxi Servis Vanadzor APKs
+on:
+  push:
+    branches: [taxi-servis-vanadzor-fresh]
+    paths:
+      - 'taxi-servis-vanadzor/**'
+      - '.github/workflows/build-taxi-servis-vanadzor.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: taxi-servis-vanadzor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Build passenger and driver APKs
+        run: |
+          chmod +x ./gradlew 2>/dev/null || true
+          gradle --no-daemon assemblePassengerDebug assembleDriverDebug
+      - name: Rename APKs
+        run: |
+          mkdir -p output
+          cp app/build/outputs/apk/passenger/debug/app-passenger-debug.apk output/Taxi-Servis-Vanadzor-Ughևոր.apk
+          cp app/build/outputs/apk/driver/debug/app-driver-debug.apk output/Taxi-Servis-Vanadzor-Varord.apk
+      - name: Upload installable APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taxi-Servis-Vanadzor-APKs
+          path: taxi-servis-vanadzor/output/*.apk
+          if-no-files-found: error
+          retention-days: 30
