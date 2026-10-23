@@ -45,6 +45,12 @@ android {
             resValue 'string', 'app_name', 'Taxi Servis Vanadzor — Վարորդ'
             buildConfigField 'String', 'APP_ROLE', '"driver"'
         }
+        dispatcher {
+            dimension 'role'
+            applicationIdSuffix '.dispatcher'
+            resValue 'string', 'app_name', 'Taxi Servis Vanadzor — Դիսպետչեր'
+            buildConfigField 'String', 'APP_ROLE', '"dispatcher"'
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
