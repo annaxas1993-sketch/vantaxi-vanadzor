@@ -67,7 +67,10 @@ public class MainActivity extends Activity {
         if(body!=null){c.setDoOutput(true);try(OutputStream o=c.getOutputStream()){o.write(body.toString().getBytes(StandardCharsets.UTF_8));}}
         int code=c.getResponseCode(); InputStream in=code<400?c.getInputStream():c.getErrorStream(); ByteArrayOutputStream out=new ByteArrayOutputStream(); if(in!=null){byte[] buf=new byte[2048];int n;while((n=in.read(buf))>0)out.write(buf,0,n);} String text=out.toString("UTF-8"); c.disconnect();
         if(code<200||code>=300)throw new Exception("Սերվեր "+code+": "+text);
-        if(text.trim().startsWith("[")){JSONObject x=new JSONObject();x.put("data",new JSONArray(text));return x;} return text.trim().isEmpty()?new JSONObject():new JSONObject(text);
+        if(text.trim().startsWith("[")){JSONObject x=new JSONObject();x.put("data",new JSONArray(text));return x;}
+        if(text.trim().startsWith("{"))return new JSONObject(text);
+        if(text.trim().isEmpty())return new JSONObject();
+        JSONObject scalar=new JSONObject(); scalar.put("value",new JSONTokener(text).nextValue()); return scalar;
     }
     void order(){
         try {
@@ -121,7 +124,7 @@ public class MainActivity extends Activity {
             try{
                 JSONObject args=new JSONObject(); args.put("p_ride_id",rideId); args.put("p_status",nextStatus);
                 JSONObject result=call("/rest/v1/rpc/update_vantaxi_ride_status","POST",args,true);
-                if(result.optBoolean("data",true)){
+                if(result.optBoolean("value",false)){
                     b.setEnabled(false); b.setText("Կարգավիճակը թարմացվեց");
                     msg("Պատվերի կարգավիճակը թարմացվեց։ Սեղմեք «Թարմացնել պատվերները»։");
                 } else msg("Կարգավիճակը չփոխվեց։ Թարմացրեք ցանկը։");
