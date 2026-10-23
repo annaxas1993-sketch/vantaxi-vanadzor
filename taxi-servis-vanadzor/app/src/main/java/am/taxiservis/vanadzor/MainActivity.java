@@ -97,14 +97,24 @@ public class MainActivity extends Activity {
             if(a!=null) for(int i=0;i<a.length();i++){
                 JSONObject x=a.getJSONObject(i); String id=x.optString("id"); String st=x.optString("status");
                 TextView details=new TextView(this); details.setText("\n"+x.optString("pickup_address")+" → "+x.optString("destination_address")+"\nԿարգավիճակ՝ "+st); details.setTextSize(16); details.setPadding(8,12,8,4); list.addView(details);
-                if(st.equals("new") || (st.equals("assigned") && x.optString("assigned_driver").equals(userId))){
-                    Button take=new Button(this); take.setText("Ընդունել պատվերը"); list.addView(take);
+                if(st.equals("new")){
+                    Button take=new Button(this); take.setText("Ընդունել ազատ պատվերը"); list.addView(take);
                     take.setOnClickListener(v -> claimRide(id,take));
+                } else if(st.equals("assigned") && x.optString("assigned_driver").equals(userId)){
+                    Button take=new Button(this); take.setText("Հաստատել ինձ նշանակված պատվերը"); list.addView(take);
+                    take.setOnClickListener(v -> acceptAssignedRide(id,take));
                 }
             }
             root.addView(list);
             msg("Պատվերների ցանկը թարմացվեց։");
         }catch(Exception e){msg("Պատվերները բեռնել չհաջողվեց։");}
+    }
+    void acceptAssignedRide(String rideId, Button b){
+        try{
+            JSONObject args=new JSONObject(); args.put("p_ride_id",rideId); args.put("p_status","accepted");
+            call("/rest/v1/rpc/update_vantaxi_ride_status","POST",args,true);
+            b.setEnabled(false); b.setText("Ընդունված է"); msg("Նշանակված պատվերը հաստատվեց։ Թարմացրեք ցանկը։");
+        }catch(Exception e){msg("Պատվերը չհաստատվեց։ Ստուգեք կապը կամ դիմեք դիսպետչերին։");}
     }
     void claimRide(String rideId, Button b){
         try{
