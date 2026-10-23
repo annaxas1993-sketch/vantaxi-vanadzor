@@ -1,0 +1,59 @@
+name: Release Taxi Servis Vanadzor (signed)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: taxi-servis-vanadzor-fresh
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Configure private signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || (echo "Missing ANDROID_KEYSTORE_BASE64 secret"; exit 1)
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret"; exit 1)
+          test -n "$ANDROID_KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS secret"; exit 1)
+          test -n "$ANDROID_KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD secret"; exit 1)
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/taxi-servis-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/taxi-servis-release.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Build signed release APKs and Play bundles
+        working-directory: taxi-servis-vanadzor
+        run: gradle --no-daemon assemblePassengerRelease assembleDriverRelease bundlePassengerRelease bundleDriverRelease
+      - name: Upload signed releases
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taxi-Servis-Vanadzor-SIGNED-RELEASE
+          path: |
+            taxi-servis-vanadzor/app/build/outputs/apk/passenger/release/*.apk
+            taxi-servis-vanadzor/app/build/outputs/apk/driver/release/*.apk
+            taxi-servis-vanadzor/app/build/outputs/bundle/passengerRelease/*.aab
+            taxi-servis-vanadzor/app/build/outputs/bundle/driverRelease/*.aab
+          if-no-files-found: error
+          retention-days: 30
