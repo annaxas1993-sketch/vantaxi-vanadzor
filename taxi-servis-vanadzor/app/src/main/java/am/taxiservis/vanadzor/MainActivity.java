@@ -103,11 +103,30 @@ public class MainActivity extends Activity {
                 } else if(st.equals("assigned") && x.optString("assigned_driver").equals(userId)){
                     Button take=new Button(this); take.setText("Հաստատել ինձ նշանակված պատվերը"); list.addView(take);
                     take.setOnClickListener(v -> acceptAssignedRide(id,take));
+                } else if(st.equals("accepted") && x.optString("assigned_driver").equals(userId)){
+                    rideStatusButton(list,id,"Մոտենում եմ ուղևորին","approaching");
+                } else if(st.equals("approaching") && x.optString("assigned_driver").equals(userId)){
+                    rideStatusButton(list,id,"Ուղևորը նստել է","with_passenger");
+                } else if(st.equals("with_passenger") && x.optString("assigned_driver").equals(userId)){
+                    rideStatusButton(list,id,"Ավարտել ուղևորությունը","completed");
                 }
             }
             root.addView(list);
             msg("Պատվերների ցանկը թարմացվեց։");
         }catch(Exception e){msg("Պատվերները բեռնել չհաջողվեց։");}
+    }
+    void rideStatusButton(LinearLayout list,String rideId,String label,String nextStatus){
+        Button b=new Button(this); b.setText(label); list.addView(b);
+        b.setOnClickListener(v -> {
+            try{
+                JSONObject args=new JSONObject(); args.put("p_ride_id",rideId); args.put("p_status",nextStatus);
+                JSONObject result=call("/rest/v1/rpc/update_vantaxi_ride_status","POST",args,true);
+                if(result.optBoolean("data",true)){
+                    b.setEnabled(false); b.setText("Կարգավիճակը թարմացվեց");
+                    msg("Պատվերի կարգավիճակը թարմացվեց։ Սեղմեք «Թարմացնել պատվերները»։");
+                } else msg("Կարգավիճակը չփոխվեց։ Թարմացրեք ցանկը։");
+            }catch(Exception e){msg("Կարգավիճակը չփոխվեց։ Ստուգեք կապը կամ դիմեք դիսպետչերին։");}
+        });
     }
     void acceptAssignedRide(String rideId, Button b){
         try{
