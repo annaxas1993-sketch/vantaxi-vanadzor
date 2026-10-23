@@ -35,15 +35,16 @@ jobs:
           test -n "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-      - name: Build passenger and driver APKs
+      - name: Build passenger, driver, and dispatcher APKs
         run: |
           chmod +x ./gradlew 2>/dev/null || true
-          gradle --no-daemon assemblePassengerDebug assembleDriverDebug
+          gradle --no-daemon assemblePassengerDebug assembleDriverDebug assembleDispatcherDebug
       - name: Rename APKs
         run: |
           mkdir -p output
           cp app/build/outputs/apk/passenger/debug/app-passenger-debug.apk output/Taxi-Servis-Vanadzor-Ughևոր.apk
           cp app/build/outputs/apk/driver/debug/app-driver-debug.apk output/Taxi-Servis-Vanadzor-Varord.apk
+          cp app/build/outputs/apk/dispatcher/debug/app-dispatcher-debug.apk output/Taxi-Servis-Vanadzor-Dispecher.apk
       - name: Upload installable APKs
         uses: actions/upload-artifact@v4
         with:
