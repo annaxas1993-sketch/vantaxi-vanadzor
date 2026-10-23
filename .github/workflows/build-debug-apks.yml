@@ -1,6 +1,12 @@
 name: Build installable Taxi Servis Vanadzor debug APKs
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - taxi-servis-vanadzor-fresh
+    paths:
+      - '.github/workflows/build-debug-apks.yml'
+      - 'taxi-servis-vanadzor/**'
 permissions:
   contents: read
   actions: read
