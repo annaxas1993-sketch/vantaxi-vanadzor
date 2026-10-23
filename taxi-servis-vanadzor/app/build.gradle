@@ -3,6 +3,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'am.taxiservis.vanadzor'
     compileSdk 35
+    buildFeatures { buildConfig true }
     defaultConfig {
         applicationId 'am.taxiservis.vanadzor'
         minSdk 23
