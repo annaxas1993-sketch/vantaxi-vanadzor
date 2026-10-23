@@ -20,14 +20,14 @@ android {
             dimension 'audience'
             applicationIdSuffix '.passenger'
             versionNameSuffix '-passenger'
-            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/?mode=passenger"'
+            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/index.html"'
             resValue 'string', 'app_name', 'VanTaxi Ուղևոր'
         }
         driver {
             dimension 'audience'
             applicationIdSuffix '.driver'
             versionNameSuffix '-driver'
-            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/?mode=driver"'
+            buildConfigField 'String', 'SITE_URL', '"https://jocular-dasik-f651c6.netlify.app/driver.html"'
             resValue 'string', 'app_name', 'VanTaxi Վարորդ'
         }
     }
