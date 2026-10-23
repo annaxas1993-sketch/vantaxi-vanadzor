@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
     void rides(){
         if(token.isEmpty()){msg("Նախ մուտք գործեք։");return;}
         try{
-            JSONObject r=call("/rest/v1/rides?select=id,pickup_address,destination_address,status,assigned_driver,created_at&status=in.(new,assigned,accepted)&order=created_at.desc","GET",null,true);
+            JSONObject r=call("/rest/v1/rides?select=id,pickup_address,destination_address,status,assigned_driver,created_at&status=in.(new,assigned,accepted,approaching,with_passenger)&order=created_at.desc","GET",null,true);
             JSONArray a=r.optJSONArray("data");
             if(rideList!=null) root.removeView(rideList);
             LinearLayout list=new LinearLayout(this); list.setOrientation(1); rideList=list;
