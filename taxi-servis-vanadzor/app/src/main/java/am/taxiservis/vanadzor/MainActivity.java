@@ -88,10 +88,36 @@ public class MainActivity extends Activity {
     void rides(){
         if(token.isEmpty()){msg("Նախ մուտք գործեք։");return;}
         try{
-            JSONObject r=call("/rest/v1/rides?select=id,pickup_address,destination_address,status,created_at&status=in.(requested,assigned,accepted)&order=created_at.desc","GET",null,true);
-            JSONArray a=r.optJSONArray("data"); StringBuilder text=new StringBuilder("Պատվերներ՝\n");
-            if(a!=null)for(int i=0;i<a.length();i++){JSONObject x=a.getJSONObject(i);text.append("\n• ").append(x.optString("pickup_address")).append(" → ").append(x.optString("destination_address")).append(" [").append(x.optString("status")).append("]\n");}
-            msg(text.toString());
-        }catch(Exception e){msg("Պատվերները բեռնել չհաջողվեց։ "+e.getMessage());}
+            JSONObject r=call("/rest/v1/rides?select=id,pickup_address,destination_address,status,assigned_driver,created_at&status=in.(requested,assigned,accepted)&order=created_at.desc","GET",null,true);
+            JSONArray a=r.optJSONArray("data");
+            LinearLayout list=new LinearLayout(this); list.setOrientation(1);
+            TextView title=new TextView(this); title.setText("Պատվերներ՝ "+(a==null?0:a.length())); title.setTextSize(18); list.addView(title);
+            if(a!=null) for(int i=0;i<a.length();i++){
+                JSONObject x=a.getJSONObject(i); String id=x.optString("id"); String st=x.optString("status");
+                TextView details=new TextView(this); details.setText("\\n"+x.optString("pickup_address")+" → "+x.optString("destination_address")+"\\nԿարգավիճակ՝ "+st); details.setTextSize(16); details.setPadding(8,12,8,4); list.addView(details);
+                if(st.equals("requested") || (st.equals("assigned") && x.optString("assigned_driver").equals(userId))){
+                    Button take=new Button(this); take.setText("Ընդունել պատվերը"); list.addView(take);
+                    take.setOnClickListener(v -> claimRide(id,take));
+                }
+            }
+            root.addView(list);
+            msg("Պատվերների ցանկը թարմացվեց։");
+        }catch(Exception e){msg("Պատվերները բեռնել չհաջողվեց։");}
+    }
+    void claimRide(String rideId, Button b){
+        try{
+            JSONObject args=new JSONObject(); args.put("p_ride_id",rideId);
+            call("/rest/v1/rpc/claim_vantaxi_ride","POST",args,true);
+            b.setEnabled(false); b.setText("Ընդունված է"); msg("Պատվերն ընդունվեց։ Թարմացրեք ցանկը։");
+        }catch(Exception e){msg("Պատվերը չընդունվեց։ Հնարավոր է՝ այն արդեն վերցրել է այլ վարորդ։");}
+    }
+    void sendLocation(){
+        try{
+            askLocation();
+            if(latest==null){msg("GPS տեղադրությունը դեռ հասանելի չէ։ Միացրեք GPS-ը և փորձեք կրկին։");return;}
+            JSONObject b=new JSONObject(); b.put("last_latitude",latest.getLatitude()); b.put("last_longitude",latest.getLongitude()); b.put("last_location_at",java.time.Instant.now().toString());
+            call("/rest/v1/profiles?id=eq."+URLEncoder.encode(userId,"UTF-8"),"PATCH",b,true);
+            msg("GPS տեղադրությունն ուղարկվեց։");
+        }catch(Exception e){msg("GPS-ը չուղարկվեց։ Ստուգեք կապը և թույլտվությունը։");}
     }
 }
