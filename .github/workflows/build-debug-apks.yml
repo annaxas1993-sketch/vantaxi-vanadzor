@@ -1,0 +1,44 @@
+name: Build installable Taxi Servis Vanadzor debug APKs
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: taxi-servis-vanadzor-fresh
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install Android SDK packages
+        run: |
+          SDKMANAGER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build debug APKs
+        working-directory: taxi-servis-vanadzor
+        run: gradle --no-daemon assemblePassengerDebug assembleDriverDebug assembleDispatcherDebug
+      - name: Upload installable debug APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taxi-Servis-Vanadzor-DEBUG-APKs
+          path: |
+            taxi-servis-vanadzor/app/build/outputs/apk/passenger/debug/*.apk
+            taxi-servis-vanadzor/app/build/outputs/apk/driver/debug/*.apk
+            taxi-servis-vanadzor/app/build/outputs/apk/dispatcher/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
