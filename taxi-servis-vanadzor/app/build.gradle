@@ -1,0 +1,32 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'am.taxiservis.vanadzor'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'am.taxiservis.vanadzor'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+    flavorDimensions += 'role'
+    productFlavors {
+        passenger {
+            dimension 'role'
+            applicationIdSuffix '.passenger'
+            resValue 'string', 'app_name', 'Taxi Servis Vanadzor — Ուղևոր'
+            buildConfigField 'String', 'APP_ROLE', '"passenger"'
+        }
+        driver {
+            dimension 'role'
+            applicationIdSuffix '.driver'
+            resValue 'string', 'app_name', 'Taxi Servis Vanadzor — Վարորդ'
+            buildConfigField 'String', 'APP_ROLE', '"driver"'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
