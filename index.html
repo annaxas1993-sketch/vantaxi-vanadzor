@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="hy"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VanTaxi — Ուղևորի պատվեր</title><style>
+:root{font-family:system-ui,Arial,sans-serif;color:#17202a;background:#f3f6fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:520px;margin:0 auto;padding:24px 16px}.brand{font-size:28px;font-weight:850;color:#087e8b;margin:12px 0}.card{background:white;border-radius:18px;padding:22px;box-shadow:0 8px 28px #10203012}label{display:block;font-weight:650;margin:14px 0 6px}input,textarea{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:10px;font:inherit}button{width:100%;padding:15px;border:0;border-radius:11px;background:#087e8b;color:white;font-weight:750;font-size:16px;margin-top:18px}small,.hint{color:#5d6d7e}#msg{margin-top:14px;font-weight:650}</style></head>
+<body><main class="wrap"><div class="brand">🚕 VanTaxi</div><p>Տաքսու պատվեր՝ Վանաձորում</p><section class="card"><h2>Պատվիրել տաքսի</h2><form id="order">
+<label for="name">Ձեր անունը</label><input id="name" required maxlength="100" autocomplete="name" placeholder="Անուն">
+<label for="phone">Հեռախոսահամար</label><input id="phone" required maxlength="30" autocomplete="tel" type="tel" placeholder="+374…">
+<label for="pickup">Որտեղից վերցնել</label><input id="pickup" required maxlength="250" placeholder="Հասցե կամ վայր">
+<label for="destination">Ուր գնալ</label><input id="destination" required maxlength="250" placeholder="Նպատակակետ">
+<label for="note">Նշում (ըստ ցանկության)</label><textarea id="note" rows="2" maxlength="500" placeholder="Լրացուցիչ տեղեկություն"></textarea>
+<button id="submit" type="submit">Պատվիրել տաքսի</button><div id="msg" role="status"></div></form></section><p class="hint">Պատվերը կուղարկվի առցանց համակարգ։ Ուղարկելուց հետո սպասեք դիսպետչերի կամ վարորդի կապին։</p></main>
+<script>
+const SUPABASE_URL="https://itcismqoozcevvrthgve.supabase.co", SUPABASE_KEY="sb_publishable_ZuV-MRbChdSIybvepuOz5g_jYEgW52n";
+const form=document.getElementById('order'), msg=document.getElementById('msg'), btn=document.getElementById('submit');
+form.addEventListener('submit',async e=>{e.preventDefault();msg.textContent='Ուղարկվում է…';btn.disabled=true;
+const payload={p_customer_name:document.getElementById('name').value.trim(),p_customer_phone:document.getElementById('phone').value.trim(),p_pickup_address:document.getElementById('pickup').value.trim(),p_destination_address:document.getElementById('destination').value.trim(),p_customer_note:document.getElementById('note').value.trim()||null};
+try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/submit_ride_order',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify(payload)});const t=await r.text();if(!r.ok)throw new Error('Պատվերը չընդունվեց ('+r.status+'). '+t.slice(0,180));form.reset();msg.textContent='Պատվերն ուղարկված է։ Խնդրում ենք սպասել կապին։';}catch(err){msg.textContent='Չհաջողվեց ուղարկել պատվերը։ Ստուգեք ինտերնետը և կրկին փորձեք։';console.error(err);}finally{btn.disabled=false;}});
+</script></body></html>
