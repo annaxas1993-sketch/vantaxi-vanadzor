@@ -1,4 +1,4 @@
-name: Build VanTaxi Android APK
+name: Build VanTaxi Passenger and Driver APKs
 on:
   workflow_dispatch:
   push:
@@ -20,11 +20,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
-        run: gradle assembleDebug
-      - name: Upload APK
+      - name: Build passenger and driver APKs
+        run: gradle assemblePassengerDebug assembleDriverDebug
+      - name: Upload passenger APK
         uses: actions/upload-artifact@v4
         with:
-          name: vantaxi-vanadzor-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: vantaxi-passenger-apk
+          path: app/build/outputs/apk/passenger/debug/app-passenger-debug.apk
+          if-no-files-found: error
+      - name: Upload driver APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vantaxi-driver-apk
+          path: app/build/outputs/apk/driver/debug/app-driver-debug.apk
           if-no-files-found: error
