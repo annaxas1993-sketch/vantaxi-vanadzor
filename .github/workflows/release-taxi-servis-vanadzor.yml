@@ -1,6 +1,10 @@
 name: Release Taxi Servis Vanadzor (signed)
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/release-taxi-servis-vanadzor.yml"
 permissions:
   contents: read
   actions: read
@@ -40,7 +44,6 @@ jobs:
           test -n "$ANDROID_KEYSTORE_PASSWORD" || (echo "Missing ANDROID_KEYSTORE_PASSWORD secret"; exit 1)
           test -n "$ANDROID_KEY_ALIAS" || (echo "Missing ANDROID_KEY_ALIAS secret"; exit 1)
           test -n "$ANDROID_KEY_PASSWORD" || (echo "Missing ANDROID_KEY_PASSWORD secret"; exit 1)
-          # Normalize pasted multiline values and ignore accidental non-base64 decoration.
           printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode --ignore-garbage > "$RUNNER_TEMP/taxi-servis-release.jks"
           test -s "$RUNNER_TEMP/taxi-servis-release.jks" || (echo "Keystore decode produced an empty file; recheck ANDROID_KEYSTORE_BASE64 secret"; exit 1)
           keytool -list -keystore "$RUNNER_TEMP/taxi-servis-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null || (echo "Decoded keystore is invalid or ANDROID_KEYSTORE_PASSWORD is incorrect; recheck the existing signing secrets"; exit 1)
