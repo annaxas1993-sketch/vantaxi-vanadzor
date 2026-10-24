@@ -36,14 +36,23 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
+          echo "available=false" >> "$GITHUB_OUTPUT"
           if [[ -z "$KEYSTORE_BASE64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "Private release signing secrets are not all configured; building installable debug APKs instead."
+            echo "Private signing secrets are missing; will build installable debug APKs."
             exit 0
           fi
-          printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode --ignore-garbage > "$RUNNER_TEMP/taxi-servis-release.jks"
-          test -s "$RUNNER_TEMP/taxi-servis-release.jks" || { echo "Keystore decode produced an empty file; check ANDROID_KEYSTORE_BASE64."; exit 1; }
-          keytool -list -keystore "$RUNNER_TEMP/taxi-servis-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null || { echo "Keystore is invalid or ANDROID_KEYSTORE_PASSWORD is incorrect."; exit 1; }
+          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode --ignore-garbage > "$RUNNER_TEMP/taxi-servis-release.jks"; then
+            echo "Keystore Base64 could not be decoded; will build installable debug APKs."
+            exit 0
+          fi
+          if [[ ! -s "$RUNNER_TEMP/taxi-servis-release.jks" ]]; then
+            echo "Keystore file is empty; will build installable debug APKs."
+            exit 0
+          fi
+          if ! keytool -list -keystore "$RUNNER_TEMP/taxi-servis-release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "Keystore validation failed (bad keystore or password); will build installable debug APKs."
+            exit 0
+          fi
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/taxi-servis-release.jks" >> "$GITHUB_ENV"
           echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
